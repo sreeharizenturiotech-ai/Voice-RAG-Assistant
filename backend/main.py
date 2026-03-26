@@ -1,5 +1,18 @@
-from fastapi import FastAPI, UploadFile, File
+# =========================
+# ✅ FIX FFmpeg (MUST BE FIRST)
+# =========================
+import os
+import imageio_ffmpeg
+
+os.environ["FFMPEG_BINARY"] = imageio_ffmpeg.get_ffmpeg_exe()
+
+# =========================
+# IMPORTS
+# =========================
+from fastapi import FastAPI, UploadFile, File, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
 import whisper
 import json
 import faiss
@@ -9,16 +22,13 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 from gtts import gTTS
 
-import os
-import imageio_ffmpeg
-
-# Set ffmpeg path manually
-os.environ["FFMPEG_BINARY"] = imageio_ffmpeg.get_ffmpeg_exe()
-
+# =========================
+# INIT APP
+# =========================
 app = FastAPI()
 
 # =========================
-# ✅ CORS FIX (IMPORTANT)
+# ✅ CORS
 # =========================
 app.add_middleware(
     CORSMiddleware,
@@ -29,11 +39,15 @@ app.add_middleware(
 )
 
 # =========================
+# ✅ Serve audio files
+# =========================
+app.mount("/", StaticFiles(directory="."), name="static")
+
+# =========================
 # LOAD MODELS
 # =========================
-
 print("Loading Whisper...")
-stt_model = whisper.load_model("base")
+stt_model = whisper.load_model("base")  # ⚠️ use "tiny" for faster
 
 print("Loading documents...")
 with open("rag_documents.json", "r", encoding="utf-8") as f:
@@ -44,7 +58,6 @@ texts = [doc["text"] for doc in documents]
 # =========================
 # CHUNKING
 # =========================
-
 def chunk_text(text, chunk_size=400, overlap=80):
     words = text.split()
     chunks = []
@@ -62,7 +75,6 @@ for t in texts:
 # =========================
 # EMBEDDINGS + FAISS
 # =========================
-
 print("Loading embeddings...")
 embedder = SentenceTransformer("BAAI/bge-small-en-v1.5")
 
@@ -75,7 +87,6 @@ index.add(embeddings)
 # =========================
 # RETRIEVER
 # =========================
-
 def retrieve_top_k(question, k=5, threshold=1.0):
     query_embedding = embedder.encode([question]).astype("float32")
     D, I = index.search(query_embedding, k)
@@ -86,9 +97,8 @@ def retrieve_top_k(question, k=5, threshold=1.0):
     return [chunks[i] for i in I[0]]
 
 # =========================
-# LOAD QWEN MODEL
+# LOAD LLM (QWEN)
 # =========================
-
 print("Loading Qwen...")
 model_name = "Qwen/Qwen2.5-1.5B-Instruct"
 
@@ -103,7 +113,6 @@ model = AutoModelForCausalLM.from_pretrained(
 # =========================
 # GENERATE ANSWER
 # =========================
-
 def generate_answer(context, question):
     prompt = f"""
 You are a helpful assistant.
@@ -140,13 +149,12 @@ Answer:
 # =========================
 # API ROUTE
 # =========================
-
 @app.post("/voice")
-async def voice_chat(file: UploadFile = File(...)):
+async def voice_chat(request: Request, file: UploadFile = File(...)):
 
     audio_path = "input.wav"
 
-    # Save incoming audio
+    # Save audio
     with open(audio_path, "wb") as f:
         f.write(await file.read())
 
@@ -156,7 +164,7 @@ async def voice_chat(file: UploadFile = File(...)):
 
     print("User:", question)
 
-    # 🔍 RAG retrieval
+    # 🔍 Retrieve
     docs = retrieve_top_k(question)
 
     if not docs:
@@ -168,12 +176,15 @@ async def voice_chat(file: UploadFile = File(...)):
     print("Bot:", answer)
 
     # 🔊 Text → Speech
-    tts = gTTS(answer)
     audio_file = "response.mp3"
+    tts = gTTS(answer)
     tts.save(audio_file)
+
+    # ✅ Dynamic URL (IMPORTANT for Render)
+    base_url = str(request.base_url)
 
     return {
         "question": question,
         "answer": answer,
-        "audio": f"http://127.0.0.1:8000/{audio_file}"
+        "audio": base_url + audio_file
     }
