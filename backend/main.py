@@ -9,6 +9,12 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 from gtts import gTTS
 
+import os
+import imageio_ffmpeg
+
+# Set ffmpeg path manually
+os.environ["FFMPEG_BINARY"] = imageio_ffmpeg.get_ffmpeg_exe()
+
 app = FastAPI()
 
 # =========================
