@@ -1,0 +1,69 @@
+body {
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    width: 400px;
+    margin-top: 40px;
+}
+
+#chat {
+    height: 400px;
+    overflow-y: auto;
+    background: #1e293b;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.msg {
+    padding: 10px;
+    margin: 10px;
+    border-radius: 10px;
+    max-width: 80%;
+}
+
+.user {
+    background: #3b82f6;
+    align-self: flex-end;
+}
+
+.bot {
+    background: #22c55e;
+}
+
+.controls {
+    margin-top: 20px;
+    text-align: center;
+}
+
+button {
+    font-size: 25px;
+    padding: 15px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+}
+
+/* 🎤 Recording Animation */
+.recording {
+    animation: pulse 1s infinite;
+    background: red;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.2);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
