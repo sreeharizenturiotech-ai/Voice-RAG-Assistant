@@ -1,4 +1,4 @@
-const API = "https://your-backend.onrender.com";
+const API = "https://voice-rag-assistant-1.onrender.com/";
 
 let mediaRecorder;
 let audioChunks = [];
