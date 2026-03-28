@@ -1,4 +1,4 @@
-const API = "https://voice-rag-assistant-1.onrender.com/";
+const API = "https://voice-rag-assistant-1.onrender.com";
 
 let mediaRecorder;
 let audioChunks = [];
@@ -27,21 +27,27 @@ startBtn.onclick = async () => {
         const formData = new FormData();
         formData.append("file", blob, "audio.wav");
 
-        const res = await fetch(`${API}/voice`, {
-            method: "POST",
-            body: formData
-        });
+        try {
+            const res = await fetch(`${API}/voice`, {
+                method: "POST",
+                body: formData
+            });
 
-        const data = await res.json();
+            const data = await res.json();
 
-        addMessage(data.question, "user");
-        addMessage(data.answer, "bot");
+            addMessage(data.question, "user");
+            addMessage(data.answer, "bot");
 
-        // 🔊 play audio
-        const audio = new Audio(`${API}/${data.audio}`);
-        audio.play();
+            // 🔊 PLAY AUDIO (FIXED)
+            const audio = new Audio(data.audio);
+            audio.play();
 
-        status.innerText = "Idle";
+            status.innerText = "Idle";
+
+        } catch (err) {
+            console.error(err);
+            status.innerText = "❌ Error";
+        }
     };
 
     mediaRecorder.start();
