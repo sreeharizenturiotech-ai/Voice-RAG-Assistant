@@ -1,14 +1,22 @@
-from fastapi import FastAPI, UploadFile, File
+# =========================
+# IMPORTS
+# =========================
+from fastapi import FastAPI, UploadFile, File, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
 import requests
 import json
 import os
 from gtts import gTTS
 
+# =========================
+# INIT APP
+# =========================
 app = FastAPI()
 
 # =========================
-# CORS
+# CORS (IMPORTANT)
 # =========================
 app.add_middleware(
     CORSMiddleware,
@@ -19,22 +27,26 @@ app.add_middleware(
 )
 
 # =========================
-# ENV VARIABLES
+# SERVE AUDIO FILES
+# =========================
+app.mount("/", StaticFiles(directory="."), name="static")
+
+# =========================
+# ENV VARIABLE
 # =========================
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # =========================
-# LOAD DOCUMENTS
+# LOAD DOCUMENTS (RAG)
 # =========================
 with open("rag_documents.json", "r", encoding="utf-8") as f:
     documents = json.load(f)
 
-# Simple context join (lightweight RAG)
 def get_context():
     return "\n\n".join([doc["text"] for doc in documents[:3]])
 
 # =========================
-# SPEECH → TEXT (OpenAI Whisper API)
+# SPEECH → TEXT (API)
 # =========================
 def speech_to_text(audio_path):
     url = "https://api.openai.com/v1/audio/transcriptions"
@@ -54,7 +66,7 @@ def speech_to_text(audio_path):
     return response.json()["text"]
 
 # =========================
-# GENERATE ANSWER (LLM API)
+# LLM RESPONSE (API)
 # =========================
 def generate_answer(question):
     context = get_context()
@@ -85,29 +97,35 @@ def generate_answer(question):
     return response.json()["choices"][0]["message"]["content"]
 
 # =========================
-# ROUTE
+# API ROUTE
 # =========================
 @app.post("/voice")
-async def voice_chat(file: UploadFile = File(...)):
+async def voice_chat(request: Request, file: UploadFile = File(...)):
 
     audio_path = "input.wav"
 
+    # Save uploaded audio
     with open(audio_path, "wb") as f:
         f.write(await file.read())
 
-    # 🎤 STT
+    # 🎤 Speech → Text
     question = speech_to_text(audio_path)
+    print("User:", question)
 
-    # 🤖 LLM
+    # 🤖 Generate answer
     answer = generate_answer(question)
+    print("Bot:", answer)
 
-    # 🔊 TTS
-    tts = gTTS(answer)
+    # 🔊 Text → Speech
     audio_file = "response.mp3"
+    tts = gTTS(answer)
     tts.save(audio_file)
+
+    # ✅ Dynamic URL (VERY IMPORTANT for Vercel)
+    base_url = str(request.base_url)
 
     return {
         "question": question,
         "answer": answer,
-        "audio": audio_file
+        "audio": base_url + audio_file
     }
