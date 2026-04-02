@@ -11,19 +11,20 @@
 }
 
 body {
-  background: #050508;
+  background: #12121a;
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
   font-family: 'Google Sans', sans-serif;
+  color: #ffffff;
 }
 
 /* ── Root container ── */
 .gl-root {
   width: 400px;
   min-height: 600px;
-  background: #0a0a0f;
+  background: #1a1a28;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -32,6 +33,7 @@ body {
   border-radius: 20px;
   position: relative;
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* ── Ambient background glows ── */
@@ -99,24 +101,25 @@ body {
 .gl-title {
   font-size: 15px;
   font-weight: 500;
-  color: #e8eaed;
+  color: #ffffff;
   letter-spacing: 0.3px;
 }
 
 /* ── Status text ── */
 .gl-status {
-  font-size: 13px;
-  color: #9aa0a6;
+  font-size: 14px;
+  color: #c0c4cc;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   min-height: 18px;
   text-align: center;
   transition: color 0.4s;
+  font-weight: 400;
 }
 
-.gl-status.speaking   { color: #8ab4f8; }
-.gl-status.thinking   { color: #fdd663; }
-.gl-status.responding { color: #81c995; }
+.gl-status.speaking   { color: #7ab0ff; }
+.gl-status.thinking   { color: #ffdd57; }
+.gl-status.responding { color: #5dca7e; }
 
 /* ── Orb wrapper ── */
 .gl-orb-wrap {
@@ -166,8 +169,8 @@ body {
   width: 140px;
   height: 140px;
   border-radius: 50%;
-  background: #1c1c26;
-  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  background: #2a2a40;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -213,11 +216,11 @@ body {
 .gl-orb-mic {
   position: relative;
   z-index: 2;
-  color: #9aa0a6;
+  color: #ffffff;
   transition: color 0.4s;
 }
 
-.gl-root.active .gl-orb-mic { color: #e8eaed; }
+.gl-root.active .gl-orb-mic { color: #ffffff; }
 
 /* ── Waveform canvas ── */
 .gl-waveform-wrap {
@@ -237,26 +240,25 @@ body {
   width: 100%;
   max-width: 340px;
   min-height: 56px;
-  background: rgba(255, 255, 255, 0.035);
-  border: 0.5px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 14px;
   padding: 12px 16px;
-  color: #c4c7cc;
   font-size: 14px;
   line-height: 1.6;
-  font-weight: 300;
+  font-weight: 400;
   text-align: center;
 }
 
 .gl-transcript .t-label {
   font-size: 11px;
-  color: #5f6368;
-  letter-spacing: 0.6px;
+  color: #8a8fa8;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
   margin-bottom: 4px;
 }
 
-.gl-transcript .t-text { color: #e8eaed; }
+.gl-transcript .t-text { color: #ffffff; }
 
 /* ── Bottom controls ── */
 .gl-controls {
@@ -281,14 +283,14 @@ body {
 .gl-btn-end {
   width: 52px;
   height: 52px;
-  background: #2d2d3a;
-  border: 1.5px solid rgba(255, 255, 255, 0.08);
-  color: #9aa0a6;
+  background: #2e2e42;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 .gl-btn-end:hover {
-  background: #3a3a4a;
-  color: #e8eaed;
+  background: #3d3d55;
+  color: #ffffff;
 }
 
 /* Main mic button */
@@ -328,18 +330,18 @@ body {
 .gl-btn-mute {
   width: 52px;
   height: 52px;
-  background: #2d2d3a;
-  border: 1.5px solid rgba(255, 255, 255, 0.08);
-  color: #9aa0a6;
+  background: #2e2e42;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 .gl-btn-mute:hover {
-  background: #3a3a4a;
-  color: #e8eaed;
+  background: #3d3d55;
+  color: #ffffff;
 }
 
 .gl-btn-mute.muted {
   background: #3d2020;
-  border-color: rgba(234, 67, 53, 0.3);
-  color: #ea4335;
+  border-color: rgba(234, 67, 53, 0.5);
+  color: #ff6b5b;
 }
