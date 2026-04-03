@@ -108,24 +108,38 @@ async def voice_chat(request: Request, file: UploadFile = File(...)):
     with open(audio_path, "wb") as f:
         f.write(await file.read())
 
-    # 🎤 Speech → Text
-    question = speech_to_text(audio_path)
-    print("User:", question)
+    # Default values (important for debugging)
+    question = "❌ No transcription"
+    answer = "❌ No answer generated"
+    audio_url = ""
 
-    # 🤖 Generate answer
-    answer = generate_answer(question)
-    print("Bot:", answer)
+    try:
+        # 🎤 Speech → Text
+        question = speech_to_text(audio_path)
+        print("User:", question)
+    except Exception as e:
+        print("STT ERROR:", e)
 
-    # 🔊 Text → Speech
-    audio_file = "response.mp3"
-    tts = gTTS(answer)
-    tts.save(audio_file)
+    try:
+        # 🤖 Generate answer
+        answer = generate_answer(question)
+        print("Bot:", answer)
+    except Exception as e:
+        print("LLM ERROR:", e)
 
-    # ✅ Dynamic URL (VERY IMPORTANT for Vercel)
-    base_url = str(request.base_url)
+    try:
+        # 🔊 Text → Speech
+        audio_file = "response.mp3"
+        tts = gTTS(answer)
+        tts.save(audio_file)
+
+        base_url = str(request.base_url)
+        audio_url = base_url + audio_file
+    except Exception as e:
+        print("TTS ERROR:", e)
 
     return {
         "question": question,
         "answer": answer,
-        "audio": base_url + audio_file
+        "audio": audio_url
     }
