@@ -33,71 +33,67 @@ app.add_middleware(
 )
 
 # =========================
-# LOAD MODELS
+# GLOBAL VARIABLES (LAZY LOAD)
 # =========================
-print("Loading Whisper...")
-stt_model = whisper.load_model("tiny")  # 🔥 faster
-
-print("Loading documents...")
-with open("rag_documents.json", "r", encoding="utf-8") as f:
-    documents = json.load(f)
-
-texts = [doc["text"] for doc in documents]
+stt_model = None
+embedder = None
+index = None
+chunks = None
 
 # =========================
-# CHUNKING
+# LOAD MODELS ONLY WHEN NEEDED
 # =========================
-def chunk_text(text, chunk_size=400, overlap=80):
-    words = text.split()
-    chunks = []
-    i = 0
-    while i < len(words):
-        chunk = words[i:i + chunk_size]
-        chunks.append(" ".join(chunk))
-        i += chunk_size - overlap
-    return chunks
+def load_models():
+    global stt_model, embedder, index, chunks
 
-chunks = []
-for t in texts:
-    chunks.extend(chunk_text(t))
+    if stt_model is None:
+        print("🔥 Loading Whisper...")
+        stt_model = whisper.load_model("tiny")
 
-# =========================
-# EMBEDDINGS
-# =========================
-print("Loading embeddings...")
-embedder = SentenceTransformer("BAAI/bge-small-en-v1.5")
+    if embedder is None:
+        print("🔥 Loading embeddings...")
 
-embeddings = embedder.encode(chunks)
-embeddings = np.array(embeddings).astype("float32")
+        embedder = SentenceTransformer("BAAI/bge-small-en-v1.5")
 
-index = faiss.IndexFlatL2(embeddings.shape[1])
-index.add(embeddings)
+        with open("rag_documents.json", "r", encoding="utf-8") as f:
+            documents = json.load(f)
 
-# =========================
-# RETRIEVER
-# =========================
-def retrieve_top_k(question, k=5):
-    query_embedding = embedder.encode([question]).astype("float32")
-    D, I = index.search(query_embedding, k)
-    return [chunks[i] for i in I[0]]
+        texts = [doc["text"] for doc in documents]
 
-# =========================
-# SIMPLE ANSWER (NO QWEN ❌)
-# =========================
-def generate_answer(context, question):
-    if not context:
-        return "I don't know based on the provided documents."
-    
-    return context[:300]  # simple + fast
+        def chunk_text(text, chunk_size=400, overlap=80):
+            words = text.split()
+            chunks_local = []
+            i = 0
+            while i < len(words):
+                chunk = words[i:i + chunk_size]
+                chunks_local.append(" ".join(chunk))
+                i += chunk_size - overlap
+            return chunks_local
+
+        chunks_local = []
+        for t in texts:
+            chunks_local.extend(chunk_text(t))
+
+        embeddings = embedder.encode(chunks_local)
+        embeddings = np.array(embeddings).astype("float32")
+
+        index_local = faiss.IndexFlatL2(embeddings.shape[1])
+        index_local.add(embeddings)
+
+        index = index_local
+        chunks = chunks_local
 
 # =========================
-# API
+# API ROUTE
 # =========================
 @app.post("/voice")
 async def voice_chat(file: UploadFile = File(...)):
     try:
+        load_models()  # 🔥 IMPORTANT
+
         audio_path = "input.wav"
 
+        # Save audio
         with open(audio_path, "wb") as f:
             f.write(await file.read())
 
@@ -116,15 +112,21 @@ async def voice_chat(file: UploadFile = File(...)):
                 "audio": ""
             }
 
-        # 🔍 RAG
-        docs = retrieve_top_k(question)
+        # 🔍 RAG Retrieval
+        query_embedding = embedder.encode([question]).astype("float32")
+        D, I = index.search(query_embedding, 5)
+
+        docs = [chunks[i] for i in I[0]]
         context = "\n".join(docs)
 
-        answer = generate_answer(context, question)
+        if not context:
+            answer = "I don't know based on the provided documents."
+        else:
+            answer = context[:300]
 
         print("🤖 Bot:", answer)
 
-        # 🔊 TTS
+        # 🔊 Text → Speech
         audio_file = "response.mp3"
         tts = gTTS(answer)
         tts.save(audio_file)
@@ -144,7 +146,14 @@ async def voice_chat(file: UploadFile = File(...)):
         }
 
 # =========================
-# RUN SERVER (IMPORTANT)
+# ROOT CHECK (OPTIONAL)
+# =========================
+@app.get("/")
+def home():
+    return {"message": "Voice RAG Assistant is running 🚀"}
+
+# =========================
+# RUN SERVER (RENDER FIX)
 # =========================
 if __name__ == "__main__":
     import uvicorn
