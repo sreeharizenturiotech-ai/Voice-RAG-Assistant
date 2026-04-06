@@ -9,7 +9,9 @@ import requests
 import json
 import os
 from gtts import gTTS
+from fastapi.staticfiles import StaticFiles
 
+app.mount("/", StaticFiles(directory="."), name="static")
 # =========================
 # INIT APP
 # =========================
