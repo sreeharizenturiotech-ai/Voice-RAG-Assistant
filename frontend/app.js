@@ -28,30 +28,33 @@ startBtn.onclick = async () => {
         formData.append("file", blob, "audio.wav");
 
         try {
-           const res = await fetch(`${API}/voice`, {
-    method: "POST",
-    body: formData
-});
+            const res = await fetch(`${API}/voice`, {
+                method: "POST",
+                body: formData
+            });
 
-const data = await res.json();
+            const data = await res.json();
 
-console.log("FULL RESPONSE:", data);
+            console.log("API RESPONSE:", data); // 🔥 DEBUG
 
-// 🔥 SHOW RAW DATA (DEBUG)
-addMessage("TRANSCRIPTION: " + data.question, "user");
-addMessage("ANSWER: " + data.answer, "bot");
+            // ✅ SHOW TRANSCRIPTION
+            addMessage("🎤 " + (data.question || "No speech detected"), "user");
 
-// 🔊 PLAY AUDIO (only if exists)
-if (data.audio) {
-    const audioPlayer = document.getElementById("audioPlayer");
-    audioPlayer.src = data.audio;
-    audioPlayer.play();
-} else {
-    console.log("No audio received");
-}
+            // ✅ SHOW ANSWER
+            addMessage("🤖 " + (data.answer || "No response"), "bot");
+
+            // ✅ PLAY AUDIO
+            if (data.audio) {
+                const audio = new Audio(data.audio);
+                audio.play();
+            }
+
+            status.innerText = "✅ Done";
+
         } catch (err) {
             console.error(err);
-            status.innerText = "❌ Error";
+            addMessage("❌ Error: " + err.message, "bot");
+            status.innerText = "Error";
         }
     };
 
