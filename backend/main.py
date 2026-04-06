@@ -1,31 +1,25 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
 import whisper
 import json
 import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
-from transformers import AutoTokenizer, AutoModelForCausalLM
-import torch
 from gtts import gTTS
 
 import os
 import imageio_ffmpeg
 
-# ✅ FIX FFMPEG
+# =========================
+# FIX FFMPEG
+# =========================
 os.environ["FFMPEG_BINARY"] = imageio_ffmpeg.get_ffmpeg_exe()
 
 # =========================
-# ✅ CREATE APP FIRST
+# CREATE APP
 # =========================
 app = FastAPI()
-
-# =========================
-# ✅ THEN MOUNT STATIC
-# =========================
-app.mount("/", StaticFiles(directory="."), name="static")
 
 # =========================
 # CORS
@@ -41,9 +35,8 @@ app.add_middleware(
 # =========================
 # LOAD MODELS
 # =========================
-
 print("Loading Whisper...")
-stt_model = whisper.load_model("tiny")
+stt_model = whisper.load_model("tiny")  # 🔥 faster
 
 print("Loading documents...")
 with open("rag_documents.json", "r", encoding="utf-8") as f:
@@ -69,9 +62,8 @@ for t in texts:
     chunks.extend(chunk_text(t))
 
 # =========================
-# EMBEDDINGS + FAISS
+# EMBEDDINGS
 # =========================
-
 print("Loading embeddings...")
 embedder = SentenceTransformer("BAAI/bge-small-en-v1.5")
 
@@ -84,72 +76,23 @@ index.add(embeddings)
 # =========================
 # RETRIEVER
 # =========================
-
-def retrieve_top_k(question, k=5, threshold=1.0):
+def retrieve_top_k(question, k=5):
     query_embedding = embedder.encode([question]).astype("float32")
     D, I = index.search(query_embedding, k)
-
-    if D[0][0] > threshold:
-        return []
-
     return [chunks[i] for i in I[0]]
 
 # =========================
-# LOAD QWEN
+# SIMPLE ANSWER (NO QWEN ❌)
 # =========================
-
-print("Loading Qwen...")
-model_name = "Qwen/Qwen2.5-1.5B-Instruct"
-
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-model = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    torch_dtype=torch.float32,
-    device_map="auto"
-)
-
-# =========================
-# GENERATE ANSWER
-# =========================
-
 def generate_answer(context, question):
-    prompt = f"""
-You are a helpful assistant.
-
-Answer using ONLY the given context.
-Max 2 short sentences.
-If not found, say:
-"I don't know based on the provided documents."
-
-Context:
-{context}
-
-Question:
-{question}
-
-Answer:
-"""
-
-    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-
-    outputs = model.generate(
-        **inputs,
-        max_new_tokens=100,
-        do_sample=False
-    )
-
-    text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-    if "Answer:" in text:
-        return text.split("Answer:")[-1].strip()
-
-    return text.strip()
+    if not context:
+        return "I don't know based on the provided documents."
+    
+    return context[:300]  # simple + fast
 
 # =========================
 # API
 # =========================
-
 @app.post("/voice")
 async def voice_chat(file: UploadFile = File(...)):
     try:
@@ -160,7 +103,7 @@ async def voice_chat(file: UploadFile = File(...)):
 
         print("✅ Audio received")
 
-        # 🎤 STT
+        # 🎤 Speech → Text
         result = stt_model.transcribe(audio_path)
         question = result.get("text", "").strip()
 
@@ -175,12 +118,9 @@ async def voice_chat(file: UploadFile = File(...)):
 
         # 🔍 RAG
         docs = retrieve_top_k(question)
+        context = "\n".join(docs)
 
-        if not docs:
-            answer = "I don't know based on the provided documents."
-        else:
-            context = "\n\n".join(docs)
-            answer = generate_answer(context, question)
+        answer = generate_answer(context, question)
 
         print("🤖 Bot:", answer)
 
@@ -202,3 +142,11 @@ async def voice_chat(file: UploadFile = File(...)):
             "answer": str(e),
             "audio": ""
         }
+
+# =========================
+# RUN SERVER (IMPORTANT)
+# =========================
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
