@@ -43,7 +43,7 @@ app.add_middleware(
 # =========================
 
 print("Loading Whisper...")
-stt_model = whisper.load_model("base")
+stt_model = whisper.load_model("tiny")
 
 print("Loading documents...")
 with open("rag_documents.json", "r", encoding="utf-8") as f:
