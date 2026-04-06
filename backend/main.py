@@ -100,46 +100,56 @@ def generate_answer(question):
 # API ROUTE
 # =========================
 @app.post("/voice")
-async def voice_chat(request: Request, file: UploadFile = File(...)):
-
-    audio_path = "input.wav"
-
-    # Save uploaded audio
-    with open(audio_path, "wb") as f:
-        f.write(await file.read())
-
-    # Default values (important for debugging)
-    question = "❌ No transcription"
-    answer = "❌ No answer generated"
-    audio_url = ""
-
+async def voice_chat(file: UploadFile = File(...)):
     try:
+        audio_path = "input.wav"
+
+        # Save audio
+        with open(audio_path, "wb") as f:
+            f.write(await file.read())
+
+        print("✅ Audio received")
+
         # 🎤 Speech → Text
-        question = speech_to_text(audio_path)
-        print("User:", question)
-    except Exception as e:
-        print("STT ERROR:", e)
+        result = stt_model.transcribe(audio_path)
+        question = result.get("text", "").strip()
 
-    try:
-        # 🤖 Generate answer
-        answer = generate_answer(question)
-        print("Bot:", answer)
-    except Exception as e:
-        print("LLM ERROR:", e)
+        print("🧑 User:", question)
 
-    try:
+        if not question:
+            return {
+                "question": "No speech detected",
+                "answer": "Please try again",
+                "audio": ""
+            }
+
+        # 🔍 RAG
+        docs = retrieve_top_k(question)
+
+        if not docs:
+            answer = "I don't know based on the provided documents."
+        else:
+            context = "\n\n".join(docs)
+            answer = generate_answer(context, question)
+
+        print("🤖 Bot:", answer)
+
         # 🔊 Text → Speech
         audio_file = "response.mp3"
         tts = gTTS(answer)
         tts.save(audio_file)
 
-        base_url = str(request.base_url)
-        audio_url = base_url + audio_file
-    except Exception as e:
-        print("TTS ERROR:", e)
+        # ✅ IMPORTANT: return FULL URL
+        return {
+            "question": question,
+            "answer": answer,
+            "audio": f"https://voice-rag-assistant-1.onrender.com/{audio_file}"
+        }
 
-    return {
-        "question": question,
-        "answer": answer,
-        "audio": audio_url
-    }
+    except Exception as e:
+        print("❌ ERROR:", str(e))
+        return {
+            "question": "error",
+            "answer": str(e),
+            "audio": ""
+        }
