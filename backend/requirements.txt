@@ -1,5 +1,10 @@
 fastapi
 uvicorn
-requests
-gtts
-python-multipart
+openai-whisper
+faiss-cpu
+numpy
+sentence-transformers
+transformers
+torch
+gTTS
+imageio-ffmpeg
