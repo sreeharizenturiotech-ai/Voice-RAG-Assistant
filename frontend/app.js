@@ -3,11 +3,37 @@ const API = "https://voice-rag-assistant-1.onrender.com";
 let mediaRecorder;
 let audioChunks = [];
 
-const startBtn = document.getElementById("startBtn");
+const micBtn = document.getElementById("micBtn");
 const chat = document.getElementById("chat");
 const status = document.getElementById("status");
 
-startBtn.onclick = async () => {
+// Add message to chat
+function addMessage(text, type, audioUrl = null) {
+    const div = document.createElement("div");
+    div.className = `msg ${type}`;
+    div.innerText = text;
+
+    // If bot message → add play button
+    if (type === "bot" && audioUrl) {
+        const btn = document.createElement("button");
+        btn.innerText = "🔊 Play";
+        btn.className = "audio-btn";
+
+        btn.onclick = () => {
+            const audio = new Audio(audioUrl);
+            audio.play();
+        };
+
+        div.appendChild(document.createElement("br"));
+        div.appendChild(btn);
+    }
+
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+// Mic click
+micBtn.onclick = async () => {
 
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
@@ -21,6 +47,7 @@ startBtn.onclick = async () => {
     mediaRecorder.onstop = async () => {
 
         status.innerText = "⏳ Processing...";
+        micBtn.classList.remove("recording");
 
         const blob = new Blob(audioChunks, { type: "audio/wav" });
 
@@ -35,43 +62,29 @@ startBtn.onclick = async () => {
 
             const data = await res.json();
 
-            console.log("API RESPONSE:", data); // 🔥 DEBUG
+            // Show user message
+            addMessage(data.question, "user");
 
-            // ✅ SHOW TRANSCRIPTION
-            addMessage("🎤 " + (data.question || "No speech detected"), "user");
+            // Move mic up
+            micBtn.classList.add("moved");
 
-            // ✅ SHOW ANSWER
-            addMessage("🤖 " + (data.answer || "No response"), "bot");
+            // Show bot message
+            addMessage(data.answer, "bot", data.audio);
 
-            // ✅ PLAY AUDIO
-            if (data.audio) {
-                const audio = new Audio(data.audio);
-                audio.play();
-            }
-
-            status.innerText = "✅ Done";
+            status.innerText = "Idle";
 
         } catch (err) {
             console.error(err);
-            addMessage("❌ Error: " + err.message, "bot");
-            status.innerText = "Error";
+            status.innerText = "Error!";
         }
     };
 
     mediaRecorder.start();
-    status.innerText = "🎙 Recording...";
-    startBtn.classList.add("recording");
+
+    status.innerText = "🎤 Recording...";
+    micBtn.classList.add("recording");
 
     setTimeout(() => {
         mediaRecorder.stop();
-        startBtn.classList.remove("recording");
     }, 5000);
 };
-
-function addMessage(text, type) {
-    const div = document.createElement("div");
-    div.className = `msg ${type}`;
-    div.innerText = text;
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-}
