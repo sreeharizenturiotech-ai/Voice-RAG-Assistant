@@ -1,347 +1,95 @@
-/* =============================================
-   Gemini Live — Voice UI Styles
-   ============================================= */
-
-@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@300;400;500&display=swap');
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 body {
-  background: #12121a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  font-family: 'Google Sans', sans-serif;
-  color: #ffffff;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
 }
 
-/* ── Root container ── */
-.gl-root {
-  width: 400px;
-  min-height: 600px;
-  background: #1a1a28;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 32px 24px 28px;
-  border-radius: 20px;
-  position: relative;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+/* Chat container */
+.chat-container {
+    padding: 20px;
+    height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
-/* ── Ambient background glows ── */
-.gl-bg-glow {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 1.2s ease;
+/* Messages */
+.msg {
+    max-width: 70%;
+    padding: 12px 16px;
+    margin: 10px;
+    border-radius: 15px;
+    animation: fadeIn 0.4s ease;
 }
 
-.gl-bg-glow.g1 {
-  width: 300px;
-  height: 300px;
-  background: #1a73e8;
-  top: -60px;
-  left: -60px;
+/* User message */
+.user {
+    align-self: flex-end;
+    background: #2563eb;
 }
 
-.gl-bg-glow.g2 {
-  width: 260px;
-  height: 260px;
-  background: #ea4335;
-  bottom: -60px;
-  right: -40px;
+/* Bot message */
+.bot {
+    align-self: flex-start;
+    background: #1e293b;
 }
 
-.gl-bg-glow.g3 {
-  width: 220px;
-  height: 220px;
-  background: #34a853;
-  bottom: 80px;
-  left: 20px;
+/* Floating mic button */
+#micBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #2563eb;
+    border: none;
+    border-radius: 50%;
+    width: 65px;
+    height: 65px;
+    font-size: 26px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.4s ease;
 }
 
-.gl-root.active .gl-bg-glow {
-  opacity: 0.12;
+/* When recording */
+#micBtn.recording {
+    background: red;
+    transform: scale(1.2);
 }
 
-/* ── Header ── */
-.gl-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  align-self: flex-start;
+/* Move mic up after response */
+#micBtn.moved {
+    bottom: 120px;
 }
 
-.gl-logo {
-  display: flex;
-  gap: 3px;
+/* Status text */
+#status {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    font-size: 14px;
+    color: #94a3b8;
 }
 
-.gl-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+/* Audio button */
+.audio-btn {
+    margin-top: 8px;
+    background: #10b981;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
 }
 
-.gl-dot.b { background: #4285f4; }
-.gl-dot.r { background: #ea4335; }
-.gl-dot.y { background: #fbbc04; }
-.gl-dot.g { background: #34a853; }
-
-.gl-title {
-  font-size: 15px;
-  font-weight: 500;
-  color: #ffffff;
-  letter-spacing: 0.3px;
-}
-
-/* ── Status text ── */
-.gl-status {
-  font-size: 14px;
-  color: #c0c4cc;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  min-height: 18px;
-  text-align: center;
-  transition: color 0.4s;
-  font-weight: 400;
-}
-
-.gl-status.speaking   { color: #7ab0ff; }
-.gl-status.thinking   { color: #ffdd57; }
-.gl-status.responding { color: #5dca7e; }
-
-/* ── Orb wrapper ── */
-.gl-orb-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 28px;
-  flex: 1;
-  justify-content: center;
-}
-
-/* ── Orb ── */
-.gl-orb {
-  position: relative;
-  width: 140px;
-  height: 140px;
-  cursor: pointer;
-}
-
-.gl-orb-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.06);
-  transform-origin: center;
-}
-
-.gl-orb-ring.r1 { inset: -14px; }
-.gl-orb-ring.r2 { inset: -28px; }
-
-.gl-root.active .gl-orb-ring.r1 {
-  animation: ring-pulse 2s ease-in-out infinite;
-  border-color: rgba(66, 133, 244, 0.25);
-}
-
-.gl-root.active .gl-orb-ring.r2 {
-  animation: ring-pulse 2s ease-in-out 0.4s infinite;
-  border-color: rgba(66, 133, 244, 0.12);
-}
-
-@keyframes ring-pulse {
-  0%, 100% { transform: scale(1);    opacity: 1;   }
-  50%       { transform: scale(1.05); opacity: 0.5; }
-}
-
-.gl-orb-inner {
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  background: #2a2a40;
-  border: 1.5px solid rgba(255, 255, 255, 0.18);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  transition: border-color 0.4s, box-shadow 0.4s;
-}
-
-.gl-root.active .gl-orb-inner {
-  border-color: rgba(66, 133, 244, 0.5);
-  box-shadow:
-    0 0 0 1px rgba(66, 133, 244, 0.15),
-    inset 0 0 40px rgba(66, 133, 244, 0.08);
-}
-
-/* ── Orb colour blobs ── */
-.gl-orb-blob {
-  position: absolute;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  opacity: 0;
-  transition: opacity 0.6s;
-}
-
-.ob1 { background: #4285f4; top: 20px;    left: 20px;  filter: blur(24px); }
-.ob2 { background: #ea4335; bottom: 10px; right: 10px; filter: blur(28px); }
-.ob3 { background: #34a853; bottom: 20px; left: 30px;  filter: blur(20px); }
-
-.gl-root.active .gl-orb-blob { opacity: 1; }
-
-.gl-root.active .ob1 { animation: blob-drift 3s   ease-in-out 0s   infinite; }
-.gl-root.active .ob2 { animation: blob-drift 3.7s ease-in-out 0.5s infinite; }
-.gl-root.active .ob3 { animation: blob-drift 2.8s ease-in-out 1s   infinite; }
-
-@keyframes blob-drift {
-  0%,  100% { transform: translate(0,    0)    scale(1);   }
-  33%        { transform: translate(6px, -8px)  scale(1.1); }
-  66%        { transform: translate(-4px, 6px)  scale(0.9); }
-}
-
-/* ── Mic icon inside orb ── */
-.gl-orb-mic {
-  position: relative;
-  z-index: 2;
-  color: #ffffff;
-  transition: color 0.4s;
-}
-
-.gl-root.active .gl-orb-mic { color: #ffffff; }
-
-/* ── Waveform canvas ── */
-.gl-waveform-wrap {
-  width: 100%;
-  max-width: 320px;
-  height: 48px;
-}
-
-.gl-waveform-wrap canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-/* ── Transcript box ── */
-.gl-transcript {
-  width: 100%;
-  max-width: 340px;
-  min-height: 56px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 14px;
-  padding: 12px 16px;
-  font-size: 14px;
-  line-height: 1.6;
-  font-weight: 400;
-  text-align: center;
-}
-
-.gl-transcript .t-label {
-  font-size: 11px;
-  color: #8a8fa8;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-
-.gl-transcript .t-text { color: #ffffff; }
-
-/* ── Bottom controls ── */
-.gl-controls {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.gl-btn {
-  border: none;
-  cursor: pointer;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.gl-btn:active { transform: scale(0.93); }
-
-/* End call button */
-.gl-btn-end {
-  width: 52px;
-  height: 52px;
-  background: #2e2e42;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-}
-
-.gl-btn-end:hover {
-  background: #3d3d55;
-  color: #ffffff;
-}
-
-/* Main mic button */
-.gl-btn-main {
-  width: 72px;
-  height: 72px;
-  background: linear-gradient(135deg, #4285f4, #1a5dd4);
-  box-shadow: 0 4px 20px rgba(66, 133, 244, 0.35);
-  color: white;
-  position: relative;
-  overflow: hidden;
-}
-
-.gl-btn-main::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0);
-  transition: background 0.2s;
-}
-
-.gl-btn-main:hover::after { background: rgba(255, 255, 255, 0.1); }
-
-.gl-btn-main.active {
-  background: linear-gradient(135deg, #ea4335, #c62828);
-  box-shadow: 0 4px 20px rgba(234, 67, 53, 0.4);
-  animation: main-pulse 1.8s ease-in-out infinite;
-}
-
-@keyframes main-pulse {
-  0%, 100% { box-shadow: 0 4px 20px rgba(234, 67, 53, 0.4); }
-  50%       { box-shadow: 0 4px 32px rgba(234, 67, 53, 0.7); }
-}
-
-/* Mute button */
-.gl-btn-mute {
-  width: 52px;
-  height: 52px;
-  background: #2e2e42;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-}
-
-.gl-btn-mute:hover {
-  background: #3d3d55;
-  color: #ffffff;
-}
-
-.gl-btn-mute.muted {
-  background: #3d2020;
-  border-color: rgba(234, 67, 53, 0.5);
-  color: #ff6b5b;
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
